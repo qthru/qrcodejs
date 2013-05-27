@@ -1070,14 +1070,20 @@ var QRCode;
             this._elImage.style.display = "none";
             this._el.appendChild(this._elImage);
             this._bSupportDataURI = null;
+            
+            this._draw = htOption.draw || "drawOffscreen";
         };
+        
+        Drawing.prototype.draw = function(oQRCode) {
+            Drawing.prototype[this._draw].call(this, oQRCode);
+        }
 
         /**
          * Draw the QRCode
          *
          * @param {QRCode} oQRCode
          */
-        Drawing.prototype.draw = function(oQRCode) {
+        Drawing.prototype.drawOriginal = function(oQRCode) {
             var _elImage = this._elImage;
             var _oContext = this._oContext;
             var _htOption = this._htOption;
@@ -1124,7 +1130,7 @@ var QRCode;
          *
          * @param {QRCode} oQRCode
          */
-        Drawing.prototype.drawFast = function(oQRCode) {
+        Drawing.prototype.drawBlackOnly = function(oQRCode) {
             var _elImage = this._elImage;
             var _oContext = this._oContext;
             var _htOption = this._htOption;
@@ -1155,26 +1161,7 @@ var QRCode;
                     var nLeft = col * nWidth;
                     var nTop = row * nHeight;
                     
-                    // Rounding: rounded = (0.5 + somenum) | 0;  Much faster... http://jsperf.com/math-round-vs-hack/3
-                    
-                    //_oContext.fillRect(Math.round(nLeft), Math.round(nTop), Math.round(nWidth), Math.round(nHeight));
                     _oContext.fillRect(nLeft,nTop,nWidth,nHeight);
-                    //_oContext.fillRect(Math.floor(nLeft),Math.floor(nTop),Math.round(nWidth),Math.round(nHeight));
-                    //_oContext.fillRect(Math.ceil(nLeft),Math.ceil(nTop),Math.floor(nWidth),Math.floor(nHeight));
-                    //_oContext.fillRect(Math.floor(nLeft),Math.floor(nTop),Math.floor(nWidth),Math.floor(nHeight));
-                    
-                    // 안티 앨리어싱 방지 처리
-                    // _oContext.strokeRect(
-                    // Math.floor(nLeft) + 0.5,
-                    // Math.floor(nTop) + 0.5,
-                    // nRoundedWidth,
-                    // nRoundedHeight);
-                    // 
-                    // _oContext.strokeRect(
-                    // Math.ceil(nLeft) - 0.5,
-                    // Math.ceil(nTop) - 0.5,
-                    // nRoundedWidth,
-                    // nRoundedHeight);
                 }
             }
 
@@ -1182,8 +1169,115 @@ var QRCode;
         };
         
         
+        Drawing.prototype.drawBlackOnlyAntiAlias = function(oQRCode) {
+            var _elImage = this._elImage;
+            var _oContext = this._oContext;
+            var _htOption = this._htOption;
+
+            var nCount = oQRCode.getModuleCount();
+            var nWidth = _htOption.width / nCount;
+            var nHeight = _htOption.height / nCount;
+            var nRoundedWidth = Math.round(nWidth);
+            var nRoundedHeight = Math.round(nHeight);
+
+            _elImage.style.display = "none";
+            this.clear();
+            
+            _oContext.fillStyle = _htOption.colorLight;
+            _oContext.fillRect(0,0,_htOption.width,_htOption.height);
+
+            _oContext.strokeStyle = _htOption.colorDark;
+            _oContext.fillStyle   = _htOption.colorDark;
+            _oContext.lineWidth   = 1;
+            
+            for (var row = 0; row < nCount; row++) {
+                for (var col = 0; col < nCount; col++) {
+                    var bIsDark = oQRCode.modules[row][col];
+                    if(!bIsDark) {
+                        continue;
+                    }
+                    
+                    var nLeft = col * nWidth;
+                    var nTop = row * nHeight;
+                    
+                    _oContext.fillRect(nLeft,nTop,nWidth,nHeight);
+                }
+            }
+
+            // Anti-aliasing removal
+            var imageData = this._oContext.getImageData(0, 0, _htOption.width, _htOption.height);
+            var data = imageData.data;
+            var height = _htOption.height;
+            var width  = _htOption.width;
+            for(var y = 0; y < height; ++y) {
+                for(var x = 0; x < width; ++x) {
+                    var index = (y * width + x) * 4;
+                    //data[index + 3] = 255;
+                    if(data[index] !== 0 && data[index] !== 255) {
+                        data[index] = 255;
+                        data[++index] = 255;
+                        data[++index] = 255;
+                        data[++index] = 255;
+                    }
+                }
+            }
+            
+            this._oContext.putImageData(imageData, 0, 0);
+            // End Anti-aliasing
+            
+            this._bIsPainted = true;
+        };
+        
+        
         // offscreen
-        Drawing.prototype.draw = function(oQRCode) {
+        Drawing.prototype.drawOffscreen = function(oQRCode) {
+            var _elImage = this._elImage;
+            var _htOption = this._htOption;
+
+            var nCount = oQRCode.getModuleCount();
+            var nWidth = Math.floor(_htOption.width/nCount);
+            var nHeight = Math.floor(_htOption.height/nCount);
+            var modules = oQRCode.modules;
+            
+            
+            var can2 = document.createElement('canvas');
+            can2.width = nWidth * nCount;
+            can2.height = nHeight * nCount;
+            
+            var _oContext = can2.getContext('2d');
+            
+
+            _elImage.style.display = "none";
+            
+            _oContext.fillStyle = _htOption.colorLight;
+            _oContext.fillRect(0,0,can2.width,can2.height);
+
+            _oContext.strokeStyle = _htOption.colorDark;
+            _oContext.fillStyle   = _htOption.colorDark;
+            _oContext.lineWidth   = 1;
+            _oContext.beginPath();
+            for (var row = 0; row < nCount; row++) {
+                for (var col = 0; col < nCount; col++) {
+                    var bIsDark = modules[row][col];
+                    if(!bIsDark) {
+                        continue;
+                    }
+                    
+                    var nLeft = col * nWidth;
+                    var nTop = row * nHeight;
+                    
+                    _oContext.rect(nLeft,nTop,nWidth,nHeight);
+                    //_oContext.fillRect(nLeft,nTop,nWidth,nHeight);
+                }
+            }
+            
+            _oContext.fill();
+            this._oContext.drawImage(can2,0,0,_htOption.width, _htOption.height);
+            this._bIsPainted = true;
+        }
+
+        // offscreen simple anti-alias
+        Drawing.prototype.drawOffscreenAntiAlias = function(oQRCode) {
             var _elImage = this._elImage;
             var _htOption = this._htOption;
 
@@ -1202,11 +1296,12 @@ var QRCode;
             _elImage.style.display = "none";
             
             _oContext.fillStyle = _htOption.colorLight;
-            _oContext.fillRect(0,0,nWidth,nHeight);
+            _oContext.fillRect(0,0,can2.width,can2.height);
 
             _oContext.strokeStyle = _htOption.colorDark;
             _oContext.fillStyle   = _htOption.colorDark;
             _oContext.lineWidth   = 1;
+            _oContext.beginPath();
             for (var row = 0; row < nCount; row++) {
                 for (var col = 0; col < nCount; col++) {
                     var bIsDark = oQRCode.modules[row][col];
@@ -1217,15 +1312,40 @@ var QRCode;
                     var nLeft = col * nWidth;
                     var nTop = row * nHeight;
                     
-                    _oContext.fillRect(nLeft,nTop,nWidth,nHeight);
+                    _oContext.rect(nLeft,nTop,nWidth,nHeight);
+                    //_oContext.fillRect(nLeft,nTop,nWidth,nHeight);
                 }
             }
+            
+            _oContext.fill();
             this._oContext.drawImage(can2,0,0,_htOption.width, _htOption.height);
+            
+            
+            // Anti-aliasing removal
+            var imageData = this._oContext.getImageData(0, 0, _htOption.width, _htOption.height);
+            var data = imageData.data;
+            var height = _htOption.height;
+            var width  = _htOption.width;
+            for(var y = 0; y < height; ++y) {
+                for(var x = 0; x < width; ++x) {
+                    var index = (y * width + x) * 4;
+                    if(data[index] !== 0 && data[index] !== 255) {
+                        data[index] = 255;
+                        data[++index] = 255;
+                        data[++index] = 255;
+                        data[++index] = 255;
+                    }
+                }
+            }
+            
+            this._oContext.putImageData(imageData, 0, 0);
+            // End Anti-aliasing
+            
             this._bIsPainted = true;
         }
-
-        // buffer
-        Drawing.prototype.xdraw = function(oQRCode) {
+        
+        // ImageData
+        Drawing.prototype.drawToImageData = function(oQRCode) {
             var _elImage = this._elImage;
             var _htOption = this._htOption;
 
@@ -1241,7 +1361,11 @@ var QRCode;
             var _oContext = can2.getContext('2d');
             var imageData = _oContext.getImageData(0, 0, can2.width, can2.height);
             var data = imageData.data;
-            
+            var modules = oQRCode.modules;
+            var x, y, color, index, canWidth = can2.width, row;
+            var xMult = 4 * nWidth;
+            var yMult = canWidth * nHeight;
+            var outerX, outerY;
 
             _elImage.style.display = "none";
             
@@ -1403,7 +1527,10 @@ var QRCode;
         this._android = _getAndroid();
         this._el = el;
         this._oQRCode = null;
+        
         this._oDrawing = new Drawing(this._el, this._htOption);
+        
+        //this._oDrawing.draw = this._htOption.draw || Drawing.prototype.drawOffscreen;
 
         if (this._htOption.text) {
             this.makeCode(this._htOption.text);
