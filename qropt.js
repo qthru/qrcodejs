@@ -493,10 +493,14 @@ var QRCode;
             var moduleCount = qrCode.getModuleCount();
             var modules     = qrCode.modules;
             var lostPoint = 0;
+            var darkCount = 0;
+            
             for (var row = 0; row < moduleCount; row++) {
                 for (var col = 0; col < moduleCount; col++) {
                     var sameCount = 0;
                     var dark = modules[row][col];
+                    var count = 0;
+
                     for (var r = -1; r <= 1; r++) {
                         if (row + r < 0 || moduleCount <= row + r) {
                             continue;
@@ -516,42 +520,35 @@ var QRCode;
                     if (sameCount > 5) {
                         lostPoint += (3 + sameCount - 5);
                     }
-                }
-            }
-            for (var row = 0; row < moduleCount - 1; row++) {
-                for (var col = 0; col < moduleCount - 1; col++) {
-                    var count = 0;
-                    if (modules[row][col]) count++;
-                    if (modules[row + 1][col]) count++;
-                    if (modules[row][col + 1]) count++;
-                    if (modules[row + 1][col + 1]) count++;
-                    if (count == 0 || count == 4) {
-                        lostPoint += 3;
+                    
+                    if(col < moduleCount-1 && row < moduleCount - 1) {
+                        if (modules[row][col]) count++;
+                        if (modules[row + 1][col]) count++;
+                        if (modules[row][col + 1]) count++;
+                        if (modules[row + 1][col + 1]) count++;
+                        if (count == 0 || count == 4) {
+                            lostPoint += 3;
+                        }
                     }
-                }
-            }
-            for (var row = 0; row < moduleCount; row++) {
-                for (var col = 0; col < moduleCount - 6; col++) {
-                    if (modules[row][col] && !modules[row][col + 1] && modules[row][col + 2] && modules[row][col + 3] && modules[row][col + 4] && !modules[row][col + 5] && modules[row][col + 6]) {
-                        lostPoint += 40;
+                    
+                    if(col < moduleCount - 6) {
+                        if (modules[row][col] && !modules[row][col + 1] && modules[row][col + 2] && modules[row][col + 3] && modules[row][col + 4] && !modules[row][col + 5] && modules[row][col + 6]) {
+                            lostPoint += 40;
+                        }
                     }
-                }
-            }
-            for (var col = 0; col < moduleCount; col++) {
-                for (var row = 0; row < moduleCount - 6; row++) {
-                    if (modules[row][col] && !modules[row + 1][col] && modules[row + 2][col] && modules[row + 3][col] && modules[row + 4][col] && !modules[row + 5][col] && modules[row + 6][col]) {
-                        lostPoint += 40;
+                    
+                    if(row < moduleCount - 6) {
+                        if (modules[row][col] && !modules[row + 1][col] && modules[row + 2][col] && modules[row + 3][col] && modules[row + 4][col] && !modules[row + 5][col] && modules[row + 6][col]) {
+                            lostPoint += 40;
+                        }
                     }
-                }
-            }
-            var darkCount = 0;
-            for (var col = 0; col < moduleCount; col++) {
-                for (var row = 0; row < moduleCount; row++) {
+                    
                     if (modules[row][col]) {
                         darkCount++;
                     }
                 }
             }
+            
             var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
             lostPoint += ratio * 10;
             return lostPoint;
@@ -1210,7 +1207,6 @@ var QRCode;
             _oContext.strokeStyle = _htOption.colorDark;
             _oContext.fillStyle   = _htOption.colorDark;
             _oContext.lineWidth   = 1;
-            
             for (var row = 0; row < nCount; row++) {
                 for (var col = 0; col < nCount; col++) {
                     var bIsDark = oQRCode.modules[row][col];
@@ -1221,28 +1217,48 @@ var QRCode;
                     var nLeft = col * nWidth;
                     var nTop = row * nHeight;
                     
-                    // Rounding: rounded = (0.5 + somenum) | 0;  Much faster... http://jsperf.com/math-round-vs-hack/3
-                    
-                    //_oContext.fillRect(Math.round(nLeft), Math.round(nTop), Math.round(nWidth), Math.round(nHeight));
                     _oContext.fillRect(nLeft,nTop,nWidth,nHeight);
-                    //_oContext.fillRect(Math.floor(nLeft),Math.floor(nTop),Math.round(nWidth),Math.round(nHeight));
-                    //_oContext.fillRect(Math.ceil(nLeft),Math.ceil(nTop),Math.floor(nWidth),Math.floor(nHeight));
-                    //_oContext.fillRect(Math.floor(nLeft),Math.floor(nTop),Math.floor(nWidth),Math.floor(nHeight));
-                    
-                    // 안티 앨리어싱 방지 처리
-                    // _oContext.strokeRect(
-                    // Math.floor(nLeft) + 0.5,
-                    // Math.floor(nTop) + 0.5,
-                    // nRoundedWidth,
-                    // nRoundedHeight);
-                    // 
-                    // _oContext.strokeRect(
-                    // Math.ceil(nLeft) - 0.5,
-                    // Math.ceil(nTop) - 0.5,
-                    // nRoundedWidth,
-                    // nRoundedHeight);
                 }
             }
+            this._oContext.drawImage(can2,0,0,_htOption.width, _htOption.height);
+            this._bIsPainted = true;
+        }
+
+        // buffer
+        Drawing.prototype.xdraw = function(oQRCode) {
+            var _elImage = this._elImage;
+            var _htOption = this._htOption;
+
+            var nCount = oQRCode.getModuleCount();
+            var nWidth = Math.floor(_htOption.width/nCount);
+            var nHeight = Math.floor(_htOption.height/nCount);
+            
+            
+            var can2 = document.createElement('canvas');
+            can2.width = nWidth * nCount;
+            can2.height = nHeight * nCount;
+            
+            var _oContext = can2.getContext('2d');
+            var imageData = _oContext.getImageData(0, 0, can2.width, can2.height);
+            var data = imageData.data;
+            
+
+            _elImage.style.display = "none";
+            
+            for(var y = 0; y < can2.height; ++y) {
+                var row = Math.floor(y/nHeight);
+                for(var x = 0; x < can2.width; ++x) {
+                    var color = oQRCode.modules[row][(x/nWidth)|(x/nWidth)] ? 0 : 255;
+                    
+                    var index = (y * can2.width + x) * 4;
+                    data[index] = color;
+                    data[++index] = color;
+                    data[++index] = color;
+                    data[++index] = 255;
+                }
+            }
+            
+            _oContext.putImageData(imageData, 0, 0);
             this._oContext.drawImage(can2,0,0,_htOption.width, _htOption.height);
             this._bIsPainted = true;
         }
