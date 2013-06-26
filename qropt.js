@@ -1138,19 +1138,16 @@ var QRCode;
             var nCount = oQRCode.getModuleCount();
             var nWidth = _htOption.width / nCount;
             var nHeight = _htOption.height / nCount;
-            var nRoundedWidth = Math.round(nWidth);
-            var nRoundedHeight = Math.round(nHeight);
-
+            var nCeilWidth  = Math.ceil(nWidth);
+            var nCeilHeight = Math.ceil(nHeight);
+            
             _elImage.style.display = "none";
             this.clear();
             
-            _oContext.fillStyle = _htOption.colorLight;
-            _oContext.fillRect(0,0,_htOption.width,_htOption.height);
-
             _oContext.strokeStyle = _htOption.colorDark;
             _oContext.fillStyle   = _htOption.colorDark;
             _oContext.lineWidth   = 1;
-            
+
             for (var row = 0; row < nCount; row++) {
                 for (var col = 0; col < nCount; col++) {
                     var bIsDark = oQRCode.modules[row][col];
@@ -1158,10 +1155,10 @@ var QRCode;
                         continue;
                     }
                     
-                    var nLeft = col * nWidth;
-                    var nTop = row * nHeight;
+                    var nLeft = ~~ (col * nWidth);
+                    var nTop = ~~ (row * nHeight);
                     
-                    _oContext.fillRect(nLeft,nTop,nWidth,nHeight);
+                    _oContext.fillRect(nLeft,nTop,nCeilWidth,nCeilHeight);
                 }
             }
 
@@ -1180,6 +1177,9 @@ var QRCode;
             var nRoundedWidth = Math.round(nWidth);
             var nRoundedHeight = Math.round(nHeight);
 
+            // nWidth = nRoundedWidth;
+            // nHeight = nRoundedHeight;
+
             _elImage.style.display = "none";
             this.clear();
             
@@ -1191,6 +1191,10 @@ var QRCode;
             _oContext.lineWidth   = 1;
             _oContext.beginPath();
             
+            _oContext.webkitImageSmoothingEnabled = false;
+            _oContext.mozImageSmoothingEnabled = false;
+            _oContext.imageSmoothingEnabled = false;    
+
             for (var row = 0; row < nCount; row++) {
                 for (var col = 0; col < nCount; col++) {
                     var bIsDark = oQRCode.modules[row][col];
@@ -1219,6 +1223,9 @@ var QRCode;
             var nHeight = _htOption.height / nCount;
             var nRoundedWidth = Math.round(nWidth);
             var nRoundedHeight = Math.round(nHeight);
+            
+            // nWidth = nRoundedWidth;
+            // nHeight = nRoundedHeight;
 
             _elImage.style.display = "none";
             this.clear();
@@ -1230,6 +1237,10 @@ var QRCode;
             _oContext.fillStyle   = _htOption.colorDark;
             _oContext.lineWidth   = 1;
             
+            _oContext.webkitImageSmoothingEnabled = false;
+            _oContext.mozImageSmoothingEnabled = false;
+            _oContext.imageSmoothingEnabled = false;    
+
             for (var row = 0; row < nCount; row++) {
                 for (var col = 0; col < nCount; col++) {
                     var bIsDark = oQRCode.modules[row][col];
@@ -1295,6 +1306,11 @@ var QRCode;
             _oContext.strokeStyle = _htOption.colorDark;
             _oContext.fillStyle   = _htOption.colorDark;
             _oContext.lineWidth   = 1;
+
+            _oContext.webkitImageSmoothingEnabled = false;
+            _oContext.mozImageSmoothingEnabled = false;
+            _oContext.imageSmoothingEnabled = false;    
+
             //_oContext.beginPath();
             for (var row = 0; row < nCount; row++) {
                 for (var col = 0; col < nCount; col++) {
@@ -1342,6 +1358,11 @@ var QRCode;
             _oContext.strokeStyle = _htOption.colorDark;
             _oContext.fillStyle   = _htOption.colorDark;
             _oContext.lineWidth   = 1;
+
+            _oContext.webkitImageSmoothingEnabled = false;
+            _oContext.mozImageSmoothingEnabled = false;
+            _oContext.imageSmoothingEnabled = false;    
+
             _oContext.beginPath();
             for (var row = 0; row < nCount; row++) {
                 for (var col = 0; col < nCount; col++) {
@@ -1388,6 +1409,11 @@ var QRCode;
             _oContext.strokeStyle = _htOption.colorDark;
             _oContext.fillStyle   = _htOption.colorDark;
             _oContext.lineWidth   = 1;
+
+            _oContext.webkitImageSmoothingEnabled = false;
+            _oContext.mozImageSmoothingEnabled = false;
+            _oContext.imageSmoothingEnabled = false;    
+
             //_oContext.beginPath();
             for (var row = 0; row < nCount; row++) {
                 for (var col = 0; col < nCount; col++) {
@@ -1469,6 +1495,10 @@ var QRCode;
                 }
             }
             
+            _oContext.webkitImageSmoothingEnabled = false;
+            _oContext.mozImageSmoothingEnabled = false;
+            _oContext.imageSmoothingEnabled = false;    
+
             _oContext.putImageData(imageData, 0, 0);
             this._oContext.drawImage(can2,0,0,_htOption.width, _htOption.height);
             this._bIsPainted = true;
