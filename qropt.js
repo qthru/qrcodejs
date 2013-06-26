@@ -1183,8 +1183,8 @@ var QRCode;
             _elImage.style.display = "none";
             this.clear();
             
-            _oContext.fillStyle = _htOption.colorLight;
-            _oContext.fillRect(0,0,_htOption.width,_htOption.height);
+            //_oContext.fillStyle = _htOption.colorLight;
+            //_oContext.fillRect(0,0,_htOption.width,_htOption.height);
 
             _oContext.strokeStyle = _htOption.colorDark;
             _oContext.fillStyle   = _htOption.colorDark;
